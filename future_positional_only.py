@@ -3,7 +3,7 @@
 
 __version__ = '2023.4.19'
 
-__all__ = ['defaults']
+__all__ = ['fpo']
 
 from functools import partial, update_wrapper
 from inspect import Signature
@@ -30,21 +30,21 @@ class DefaultsSignature(Signature):
 
 
 @overload
-def defaults(func: None, /, **_defaults: object) -> Callable[[F], F]:
+def fpo(func: None, /, **_defaults: object) -> Callable[[F], F]:
     ...
 
 
 @overload
-def defaults(func: F, /, **_defaults: object) -> F:
+def fpo(func: F, /, **_defaults: object) -> F:
     ...
 
 
-def defaults(func: Union[F, None] = None, /, **_defaults: object
+def fpo(func: Union[F, None] = None, /, **_defaults: object
              ) -> Any:
     '''Set defaults for any positional-only parameter.'''
 
     if func is None:
-        return partial(defaults, **_defaults)
+        return partial(fpo, **_defaults)
 
     if not callable(func):
         raise TypeError('not a callable')

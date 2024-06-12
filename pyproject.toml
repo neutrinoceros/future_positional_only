@@ -4,9 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "positional_defaults"
+version = "0.0.1"
 authors = [
-    {name = "Nicolas Tessore", email = "n.tessore@ucl.ac.uk"},
-    {name = "Nathaniel Starkman", email = "n.starkman@mail.utoronto.ca"},
+    {name = "C.M.T. Robert"},
 ]
 description = "Set defaults for any positional-only parameter"
 readme = "README.md"
@@ -15,15 +15,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
 ]
-requires-python = ">=3.8"
-dynamic = ["version"]
-
-[project.urls]
-Homepage = "https://github.com/ntessore/positional_defaults"
-Issues = "https://github.com/ntessore/positional_defaults/issues"
-
-[tool.setuptools.dynamic]
-version = {attr = "positional_defaults.__version__"}
+requires-python = ">=3.10"
 
 [tool.mypy]
 python_version = "3.10"

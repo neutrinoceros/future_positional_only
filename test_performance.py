@@ -3,7 +3,7 @@
 from functools import wraps
 from timeit import repeat
 
-from positional_defaults import defaults
+from future_positional_only import fpo
 
 
 def decorated(func):
@@ -41,25 +41,25 @@ def func5(a1=None, a2=None, a3=None, a4=None, a5=None, /):
 func0_decorated = decorated(func0)
 func0_decorated.__name__ = 'func0_decorated'
 
-func0_defaults = defaults(func0)
-func0_defaults.__name__ = 'func0_defaults'
+func0_fpo = fpo(func0)
+func0_fpo.__name__ = 'func0_fpo'
 
 func1_decorated = decorated(func1)
 func1_decorated.__name__ = 'func1_decorated'
 
-func1_defaults = defaults(func1)
-func1_defaults.__name__ = 'func1_defaults'
+func1_fpo = fpo(func1)
+func1_fpo.__name__ = 'func1_fpo'
 
 func5_decorated = decorated(func5)
 func5_decorated.__name__ = 'func5_decorated'
 
-func5_defaults = defaults(func5)
-func5_defaults.__name__ = 'func5_defaults'
+func5_fpo = fpo(func5)
+func5_fpo.__name__ = 'func5_fpo'
 
 results = test_performance(
-    func0, func0_decorated, func0_defaults,
-    func1, func1_decorated, func1_defaults,
-    func5, func5_decorated, func5_defaults,
+    func0, func0_decorated, func0_fpo,
+    func1, func1_decorated, func1_fpo,
+    func5, func5_decorated, func5_fpo,
 )
 
 for name, times in results:

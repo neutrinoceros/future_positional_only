@@ -129,23 +129,19 @@ wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
 
         if (n_depr > 0) {
             // step 2: generate/format message
-            char *names_str[256], *s, *arguments, *respectively, *pos, *pronoun;
+            char *names_str[256], *s, *arguments, *respectively, *pronoun;
 
             Py_ssize_t size = 0;
-            // tmp init values to avoid segfaults
-            pos = "<pos>";
             PyObject *names_unicode;
             if (n_depr > 1) {
                 names_unicode = PyObject_Str(PyList_GetSlice(deprecated_kwargs, 0, n_depr));
                 s = "s";
                 arguments = " arguments";
                 respectively = ", respectively";
-                //pos = [pos for pos, _ in pos2kw]
                 pronoun = "them";
             } else {
                 names_unicode = PyObject_Repr(PyList_GET_ITEM(deprecated_kwargs, 0));
                 s = arguments = respectively = "";
-                // pos, _ = pos2kw[0];
                 pronoun = "it";
             }
             char* names__ = PyUnicode_AsUTF8AndSize(names_unicode, size);
@@ -155,10 +151,10 @@ wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
             char *msg[1024];
             sprintf(
                 msg,
-                "Passing %s%s as keyword%s (at position%s %s%s) "
+                "Passing %s%s as keyword%s "
                 "is deprecated and will stop working in a future release. "
                 "Pass %s positionally to suppress this warning.",
-                names_str, arguments, s, s, pos, respectively, pronoun
+                names_str, arguments, s, pronoun
             );
     
             // step 3: emit warning

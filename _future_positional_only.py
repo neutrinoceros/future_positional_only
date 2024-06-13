@@ -28,17 +28,14 @@ def wrap(
                 names_str = str(deprecated_kw)
                 s = "s"
                 arguments = " arguments"
-                respectively = ", respectively"
-                pos = [pos for pos, _ in pos2kw]
                 pronoun = "them"
             else:
                 names_str = repr(deprecated_kw[0])
-                s = arguments = respectively = ""
-                pos, _ = pos2kw[0]
+                s = arguments = ""
                 pronoun = "it"
 
             msg = (
-                f"Passing {names_str}{arguments} as keyword{s} (at position{s} {pos}{respectively}) "
+                f"Passing {names_str}{arguments} as keyword{s}"
                 "is deprecated and will stop working in a future release. "
                 f"Pass {pronoun} positionally to suppress this warning."
             )

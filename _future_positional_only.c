@@ -104,17 +104,44 @@ static PyMemberDef wrap_members[] = {
 
 static PyObject*
 wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
-    PyObject *result;
+    // step 1: detect deprecated keyword arguments
+    PyObject *name, *result;
+    Py_ssize_t i, n_names;
 
-    // 1
-    // for name in kwds, if name in self->names: deprecated_names.append(name)
+    n_names = PyTuple_GET_SIZE(self->names);
+    PyObject *deprecated_kwargs[n_names];
+    int n_depr = 0;
 
+    /*
+    if (kwds == NULL) {
+        printf("kwds is NULL\n");
+    }  else {
+        printf("kwds is ok\n");
+        printf("PyDict_Check(kwds)=%i\n", PyDict_Check(kwds));
+    }
+    fflush(stdout);
+    */
+    int has_kw = -1;
+    for (i=0 ; i < n_names ; i++) {
+        // safe API
+        name = PyTuple_GetItem(self->names, i);
+        // fast API
+        //name = PyTuple_GET_ITEM(self->names, i);
+        has_kw = PyDict_Contains(kwds, name);
+        //if (has_kw)) {
+            //deprecated_kwargs[i] = name;
+            //++n_depr;
+        //}
+        // else {
+            //deprecated_kwargs[i] = NULL;
+        //}
+    }
 
-    // 2
-    // generate/format message
+    if (n_depr > 0) {
+        // step 2: generate/format message
 
-    // 3
-    // emit warning
+        // step 3: emit warning
+    }
 
     result = PyObject_Call(self->wrapped, args, kwds);
     return result;

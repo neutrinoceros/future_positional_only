@@ -8,7 +8,7 @@ def noop(a, b, c, d):
 
 depr1 = fpo(kw=["a"])(noop)
 depr2 = fpo(kw=["a", "b"])(noop)
-depr4 = fpo(kw=["a", "a", "c", "d"])(noop)
+depr4 = fpo(kw=["a", "b", "c", "d"])(noop)
 
 
 @pytest.mark.parametrize("func", [depr1, depr2, depr4])
@@ -38,7 +38,7 @@ def test_no_warn(func):
             (),
             {"a": 1, "b": 2, "c": 3, "d": 4},
             r"Passing \['a', 'b'\] arguments as keywords "
-            r"\(at positions \[0, 1\] respectively\) is deprecated",
+            r"\(at positions \[0, 1\], respectively\) is deprecated",
             id="2 deprecations, 2 warns",
         ),
         pytest.param(
@@ -46,7 +46,7 @@ def test_no_warn(func):
             (),
             {"a": 1, "b": 2, "c": 3, "d": 4},
             r"Passing \['a', 'b', 'c', 'd'\] arguments as keywords "
-            r"\(at positions \[0, 1, 2, 3\] respectively\) is deprecated",
+            r"\(at positions \[0, 1, 2, 3\], respectively\) is deprecated",
             id="4 deprecation, 4 warns",
         ),
         pytest.param(
@@ -54,7 +54,7 @@ def test_no_warn(func):
             (1,),
             {"b": 2, "c": 3, "d": 4},
             r"Passing \['b', 'c', 'd'\] arguments as keywords "
-            r"\(at positions \[1, 2, 3\] respectively\) is deprecated",
+            r"\(at positions \[1, 2, 3\], respectively\) is deprecated",
             id="4 deprecation, 3 warns",
         ),
         pytest.param(
@@ -62,7 +62,7 @@ def test_no_warn(func):
             (1, 2),
             {"c": 3, "d": 4},
             r"Passing \['c', 'd'\] arguments as keywords "
-            r"\(at positions \[0, 1\] respectively\) is deprecated",
+            r"\(at positions \[2, 3\], respectively\) is deprecated",
             id="4 deprecation, 2 warns",
         ),
         pytest.param(

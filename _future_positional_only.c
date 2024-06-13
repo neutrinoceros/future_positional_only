@@ -11,8 +11,8 @@ typedef struct {
     PyObject* dict;
     int number;
     PyObject* wrapped;
-    PyObject* patterns;
-    PyObject* placeholder;
+    PyObject* names;
+    PyObject* signature;
 } WrapObject;
 
 
@@ -21,8 +21,8 @@ static void
 wrap_dealloc(WrapObject* self)
 {
     Py_XDECREF(self->wrapped);
-    Py_XDECREF(self->patterns);
-    Py_XDECREF(self->placeholder);
+    Py_XDECREF(self->names);
+    Py_XDECREF(self->signature);
     Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
@@ -34,8 +34,8 @@ wrap_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
     if (self != NULL) {
         self->number = 0;
 
-        self->patterns = PyTuple_New(0);
-        if (self->patterns == NULL) {
+        self->names = PyTuple_New(0);
+        if (self->names == NULL) {
             Py_DECREF(self);
             return NULL;
         }
@@ -44,7 +44,7 @@ wrap_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
         self->wrapped = Py_None;
 
         Py_INCREF(Py_None);
-        self->placeholder = Py_None;
+        self->signature = Py_None;
     }
 
     return (PyObject*)self;
@@ -54,56 +54,45 @@ wrap_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
 static int
 wrap_init(WrapObject* self, PyObject* args, PyObject* kwds)
 {
-    static char *kwlist[] = {"wrapped", "patterns", "placeholder", NULL};
-    Py_ssize_t i, n;
-    PyObject* wrapped, *patterns, *placeholder, *tmp;
+    static char *kwlist[] = {"wrapped", "names", "signature", NULL};
+    Py_ssize_t n_names;
+    PyObject* wrapped, *names, *signature, *tmp;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OOO:wrap", kwlist,
-                                     &wrapped, &patterns, &placeholder))
+                                     &wrapped, &names, &signature))
         return -1;
 
-    if (!PyTuple_Check(patterns)) {
-        PyErr_SetString(PyExc_TypeError, "patterns must be tuple");
+    if (!PyTuple_Check(names)) {
+        PyErr_SetString(PyExc_TypeError, "names must be a tuple");
         return -1;
     }
 
-    n = PyTuple_GET_SIZE(patterns);
+    n_names = PyTuple_GET_SIZE(names);
 
-    for (i = 0; i < n; ++i) {
-        Py_ssize_t k, j, nargs;
-        PyObject* pattern = PyTuple_GET_ITEM(patterns, i);
-        if (!PyTuple_Check(pattern)) {
-            PyErr_Format(PyExc_TypeError, "patterns[%zd] must be tuple", i);
-            return -1;
-        }
-        nargs = 0;
-        for (j = 0, k = PyTuple_GET_SIZE(pattern); j < k; ++j) {
-            PyObject* item = PyTuple_GET_ITEM(pattern, j);
-            if (item == placeholder)
-                nargs += 1;
-        }
-        if (nargs != i) {
-            PyErr_Format(PyExc_ValueError, "patterns[%zd] must contain "
-                         "placeholder %zd times (found %zd)", i, i, nargs);
-            return -1;
-        }
-    }
+    //for (i = 0; i < n_names; ++i) {
+    //    Py_ssize_t k, j, nargs;
+    //    PyObject* name = PyTuple_GET_ITEM(name, i);
+    //    if (!PyObject_TypeCheck(name, &PyBaseString_Type)) {
+    //        PyErr_Format(PyExc_TypeError, "names[%zd] must be a string", i);
+    //        return -1;
+    //    }
+    //}
 
-    self->number = n - 1;
+    self->number = n_names - 1;
 
     tmp = self->wrapped;
     Py_INCREF(wrapped);
     self->wrapped = wrapped;
     Py_XDECREF(tmp);
 
-    tmp = self->patterns;
-    Py_INCREF(patterns);
-    self->patterns = patterns;
+    tmp = self->names;
+    Py_INCREF(names);
+    self->names = names;
     Py_XDECREF(tmp);
 
-    tmp = self->placeholder;
-    Py_INCREF(placeholder);
-    self->placeholder = placeholder;
+    tmp = self->signature;
+    Py_INCREF(signature);
+    self->signature = signature;
     Py_XDECREF(tmp);
 
     return 0;
@@ -113,44 +102,26 @@ wrap_init(WrapObject* self, PyObject* args, PyObject* kwds)
 static PyMemberDef wrap_members[] = {
     {"__dict__", T_OBJECT, offsetof(WrapObject, dict), READONLY},
     {"wrapped", T_OBJECT, offsetof(WrapObject, wrapped), READONLY},
-    {"patterns", T_OBJECT, offsetof(WrapObject, patterns), READONLY},
-    {"placeholder", T_OBJECT, offsetof(WrapObject, placeholder), READONLY},
+    {"names", T_OBJECT, offsetof(WrapObject, names), READONLY},
+    {"signature", T_OBJECT, offsetof(WrapObject, signature), READONLY},
     {NULL}
 };
 
 
 static PyObject*
 wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
-    Py_ssize_t n, k, i, j;
-    PyObject *pattern, *newargs, *result;
+    PyObject *result;
 
-    if (self->wrapped == NULL)
-        Py_RETURN_NONE;
+    // 1
+    // for name in kwds, if name in self->names: deprecated_names.append(name)
 
-    n = PyTuple_GET_SIZE(args);
+    // 2
+    // generate/format message
 
-    if (n > self->number)
-        return PyObject_Call(self->wrapped, args, kwds);
+    // 3
+    // emit warning
 
-    pattern = PyTuple_GET_ITEM(self->patterns, n);
-    k = PyTuple_GET_SIZE(pattern);
-
-    newargs = PyTuple_New(k);
-    if (newargs == NULL)
-        return NULL;
-
-    for (i = 0, j = 0; i < k; ++i) {
-        PyObject* item = PyTuple_GET_ITEM(pattern, i);
-        if (item == self->placeholder)
-            item = PyTuple_GET_ITEM(args, j++);
-        Py_INCREF(item);
-        PyTuple_SET_ITEM(newargs, i, item);
-    }
-
-    result = PyObject_Call(self->wrapped, newargs, kwds);
-
-    Py_DECREF(newargs);
-
+    result = PyObject_Call(self->wrapped, args, kwds);
     return result;
 }
 
@@ -167,8 +138,8 @@ wrap_get(PyObject* self, PyObject* obj, PyObject* type) {
 
 static PyTypeObject WrapType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "_positional_defaults.wrap",
-    .tp_doc = PyDoc_STR("Wrapper that applies positional defaults."),
+    .tp_name = "_future_positional_only.wrap",
+    .tp_doc = PyDoc_STR("wrap (C impl)"),
     .tp_basicsize = sizeof(WrapObject),
     .tp_itemsize = 0,
     .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
@@ -191,7 +162,7 @@ static struct PyModuleDef module = {
 
 
 PyMODINIT_FUNC
-PyInit__positional_defaults(void) {
+PyInit__future_positional_only(void) {
     PyObject* m;
 
     if (PyType_Ready(&WrapType) < 0)

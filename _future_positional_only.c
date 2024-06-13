@@ -116,7 +116,7 @@ wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
 
     if (kwds != NULL) {
         int has_kw = -2;
-        for (i=0 ; i < n_names ; i++) {
+        for (i=0 ; i < n_names ; ++i) {
             name = PyTuple_GET_ITEM(self->names, i);
             has_kw = PyDict_Contains(kwds, name);
             if (has_kw) {
@@ -129,22 +129,33 @@ wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
 
         if (n_depr > 0) {
             // step 2: generate/format message
-            char *names_str, *s, *arguments, *respectively, *pos, *pronoun;
+            char *names_str[256], *s, *arguments, *respectively, *pos, *pronoun;
 
+            Py_ssize_t size = 0;
             // tmp init values to avoid segfaults
-            names_str = "<names_str>";
             pos = "<pos>";
             if (n_depr > 1) {
+                // the simplest way to achieve this is probably to use PyList_New
+                // instead of a PyObject* array for deprecated_kwargs
+                // note however that this means we'll need to call Py_DECREF on it
+                // when Py_WarnEx is called if an exception is raised
                 //names_str = str(deprecated_kw)
+                sprintf(names_str, "<names_str>"); // place holder
                 s = "s";
                 arguments = " arguments";
                 respectively = ", respectively";
                 //pos = [pos for pos, _ in pos2kw]
                 pronoun = "them";
             } else {
-                //names_str = repr(deprecated_kw[0])
+                for (i=0 ; i < n_names ; ++i) {
+                    if (deprecated_kwargs[i] != NULL) break;
+                }
+                PyObject *names_unicode = PyObject_Repr(deprecated_kwargs[i]);
+                char* names__ = PyUnicode_AsUTF8AndSize(names_unicode, size);
+                if(size > 256) { };
+                sprintf(names_str, "%s", names__);
                 s = arguments = respectively = "";
-                //pos, _ = pos2kw[0]
+                // pos, _ = pos2kw[0];
                 pronoun = "it";
             }
 
@@ -153,9 +164,10 @@ wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
                 msg,
                 "Passing %s%s as keyword%s (at position%s %s%s) "
                 "is deprecated and will stop working in a future release. "
-                "Pass %s positionally to supress this warning.",
+                "Pass %s positionally to suppress this warning.",
                 names_str, arguments, s, s, pos, respectively, pronoun
             );
+    
             // step 3: emit warning
             PyErr_WarnEx(PyExc_FutureWarning, msg, 2);
         }

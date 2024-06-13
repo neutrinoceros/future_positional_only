@@ -40,7 +40,7 @@ def wrap(
             msg = (
                 f"Passing {names_str}{arguments} as keyword{s} (at position{s} {pos}{respectively}) "
                 "is deprecated and will stop working in a future release. "
-                f"Pass {pronoun} positionally to supress this warning."
+                f"Pass {pronoun} positionally to suppress this warning."
             )
             warnings.warn(msg, FutureWarning, stacklevel=2)
         return wrapped(*args, **kwargs)

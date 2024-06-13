@@ -9,7 +9,6 @@
 typedef struct {
     PyObject_HEAD
     PyObject* dict;
-    int number;
     PyObject* wrapped;
     PyObject* names;
     PyObject* signature;
@@ -32,8 +31,6 @@ wrap_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
     WrapObject* self = (WrapObject*)type->tp_alloc(type, 0);
 
     if (self != NULL) {
-        self->number = 0;
-
         self->names = PyTuple_New(0);
         if (self->names == NULL) {
             Py_DECREF(self);
@@ -77,8 +74,6 @@ wrap_init(WrapObject* self, PyObject* args, PyObject* kwds)
         }
     }
 
-    self->number = n_names - 1;
-
     tmp = self->wrapped;
     Py_INCREF(wrapped);
     self->wrapped = wrapped;
@@ -113,6 +108,7 @@ wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
 
     // 1
     // for name in kwds, if name in self->names: deprecated_names.append(name)
+
 
     // 2
     // generate/format message

@@ -10,7 +10,7 @@ def wrap(
     signature: Signature,
 ) -> Callable[..., Any]:
     def wrapper(*args, **kwargs):
-        if (deprecated_kwargs := set(kwargs).union(names)):
+        if (deprecated_kwargs := set(kwargs).intersection(names)):
             params = list(signature.parameters)
             pos2kw:list[tuple[int,str]] = sorted((params.index(name), name) for name in deprecated_kwargs)
 

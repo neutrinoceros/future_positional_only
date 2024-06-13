@@ -1,31 +1,39 @@
 '''Implementation of the positional_defaults package.'''
 
 from typing import Any, Callable, Tuple
-
+import warnings
+from inspect import Signature
 
 def wrap(
     wrapped: Callable[..., Any],
-    patterns: Tuple[Tuple[object, ...], ...],
-    placeholder: object,
+    names: tuple[str, ...],
+    signature: Signature,
 ) -> Callable[..., Any]:
-    if type(patterns) is not tuple:
-        raise TypeError('patterns must be tuple')
+    def wrapper(*args, **kwargs):
+        if (deprecated_kwargs := set(kwargs).union(names)):
+            params = list(signature.parameters)
+            pos2kw:list[tuple[int,str]] = sorted((params.index(name), name) for name in deprecated_kwargs)
 
-    for i, pattern in enumerate(patterns):
-        if type(pattern) is not tuple:
-            raise TypeError(f'patterns[{i}] must be tuple')
+            deprecated_kw = [kw for _, kw in pos2kw]
+            if len(deprecated_kw) > 1:
+                names_str=str(deprecated_kw)
+                s="s"
+                arguments=" arguments"
+                respectively=", respectively"
+                pos=[pos for pos, _ in pos2kw]
+                pronoun="them"
+            else:
+                names_str=repr(deprecated_kw[0])
+                s=arguments=respectively=""
+                pos, _ = pos2kw[0]
+                pronoun="it"
 
-        nargs = sum(obj is placeholder for obj in pattern)
-        if nargs != i:
-            raise ValueError(f'patterns[{i}] must contain placeholder {i}'
-                             f'times (found {nargs})')
-
-    def wrapper(*args: object, **kwargs: object) -> Any:
-        if len(args) < len(patterns):
-            pattern = patterns[len(args)]
-            aiter = iter(args)
-            args = tuple(next(aiter) if a is placeholder else a
-                         for a in pattern)
+            msg = (
+                f"Passing {names_str}{arguments} as keyword{s} (at position{s} {pos}{respectively}) "
+                "is deprecated and will stop working in a future release. "
+                f"Pass {pronoun} positionally to supress this warning."
+            ) 
+            warnings.warn(msg, FutureWarning, stacklevel=2)
         return wrapped(*args, **kwargs)
 
     return wrapper

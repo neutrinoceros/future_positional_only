@@ -129,7 +129,33 @@ wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
 
         if (n_depr > 0) {
             // step 2: generate/format message
-            char *msg = "place holder warning message";
+            char *names_str, *s, *arguments, *respectively, *pos, *pronoun;
+
+            // tmp init values to avoid segfaults
+            names_str = "<names_str>";
+            pos = "<pos>";
+            if (n_depr > 1) {
+                //names_str = str(deprecated_kw)
+                s = "s";
+                arguments = " arguments";
+                respectively = ", respectively";
+                //pos = [pos for pos, _ in pos2kw]
+                pronoun = "them";
+            } else {
+                //names_str = repr(deprecated_kw[0])
+                s = arguments = respectively = "";
+                //pos, _ = pos2kw[0]
+                pronoun = "it";
+            }
+
+            char *msg[1024];
+            sprintf(
+                msg,
+                "Passing %s%s as keyword%s (at position%s %s%s) "
+                "is deprecated and will stop working in a future release. "
+                "Pass %s positionally to supress this warning.",
+                names_str, arguments, s, s, pos, respectively, pronoun
+            );
             // step 3: emit warning
             PyErr_WarnEx(PyExc_FutureWarning, msg, 2);
         }

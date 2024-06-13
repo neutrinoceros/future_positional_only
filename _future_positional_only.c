@@ -105,43 +105,52 @@ static PyMemberDef wrap_members[] = {
 static PyObject*
 wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
     // step 1: detect deprecated keyword arguments
-    PyObject *name, *result;
-    Py_ssize_t i, n_names;
+    PyObject *name = NULL;
+    PyObject *result = NULL;
+    Py_ssize_t i = 0;
+    Py_ssize_t n_names = 0;
 
     n_names = PyTuple_GET_SIZE(self->names);
     PyObject *deprecated_kwargs[n_names];
     int n_depr = 0;
 
+    if (kwds != NULL) {
+        int has_kw = -2;
+        for (i=0 ; i < n_names ; i++) {
+            name = PyTuple_GET_ITEM(self->names, i);
+            has_kw = PyDict_Contains(kwds, name);
+            if (has_kw) {
+                deprecated_kwargs[i] = name;
+                ++n_depr;
+            } else {
+                deprecated_kwargs[i] = NULL;
+            }
+        }
+
+        if (n_depr > 0) {
+            // step 2: generate/format message
+
+            // step 3: emit warning
+        }
+    }
+
+    // debug
     /*
+    Py_ssize_t s = 0;
+    if (args == NULL) {
+        printf("args is NULL\n");
+    } else {
+        s = PyTuple_GET_SIZE(args);
+        printf("len(args) = %i\n", s);
+    }
     if (kwds == NULL) {
         printf("kwds is NULL\n");
     }  else {
-        printf("kwds is ok\n");
-        printf("PyDict_Check(kwds)=%i\n", PyDict_Check(kwds));
+        s = PyDict_Size(kwds);
+        printf("len(kwds) = %i\n", s);
     }
     fflush(stdout);
     */
-    int has_kw = -2;
-    for (i=0 ; i < n_names ; i++) {
-        // safe API
-        name = PyTuple_GetItem(self->names, i);
-        // fast API
-        //name = PyTuple_GET_ITEM(self->names, i);
-        has_kw = PyDict_Contains(kwds, name);
-        //if (has_kw)) {
-            //deprecated_kwargs[i] = name;
-            //++n_depr;
-        //}
-        // else {
-            //deprecated_kwargs[i] = NULL;
-        //}
-    }
-
-    if (n_depr > 0) {
-        // step 2: generate/format message
-
-        // step 3: emit warning
-    }
 
     result = PyObject_Call(self->wrapped, args, kwds);
     return result;

@@ -129,8 +129,9 @@ wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
 
         if (n_depr > 0) {
             // step 2: generate/format message
-
+            char *msg = "place holder warning message";
             // step 3: emit warning
+            PyErr_WarnEx(PyExc_FutureWarning, msg, 2);
         }
     }
 

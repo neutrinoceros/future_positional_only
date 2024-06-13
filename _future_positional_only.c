@@ -121,7 +121,7 @@ wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
     }
     fflush(stdout);
     */
-    int has_kw = -1;
+    int has_kw = -2;
     for (i=0 ; i < n_names ; i++) {
         // safe API
         name = PyTuple_GetItem(self->names, i);

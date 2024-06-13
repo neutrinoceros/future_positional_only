@@ -55,7 +55,7 @@ static int
 wrap_init(WrapObject* self, PyObject* args, PyObject* kwds)
 {
     static char *kwlist[] = {"wrapped", "names", "signature", NULL};
-    Py_ssize_t n_names;
+    Py_ssize_t i, n_names;
     PyObject* wrapped, *names, *signature, *tmp;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OOO:wrap", kwlist,
@@ -69,14 +69,13 @@ wrap_init(WrapObject* self, PyObject* args, PyObject* kwds)
 
     n_names = PyTuple_GET_SIZE(names);
 
-    //for (i = 0; i < n_names; ++i) {
-    //    Py_ssize_t k, j, nargs;
-    //    PyObject* name = PyTuple_GET_ITEM(name, i);
-    //    if (!PyObject_TypeCheck(name, &PyBaseString_Type)) {
-    //        PyErr_Format(PyExc_TypeError, "names[%zd] must be a string", i);
-    //        return -1;
-    //    }
-    //}
+    for (i = 0; i < n_names; ++i) {
+        PyObject* name = PyTuple_GET_ITEM(names, i);
+        if (!PyUnicode_Check(name)) {
+            PyErr_Format(PyExc_TypeError, "names[%zd] must be a string", i);
+            return -1;
+        }
+    }
 
     self->number = n_names - 1;
 

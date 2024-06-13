@@ -111,19 +111,19 @@ wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
     Py_ssize_t n_names = 0;
 
     n_names = PyTuple_GET_SIZE(self->names);
-    PyObject *deprecated_kwargs[n_names];
-    int n_depr = 0;
+    PyObject *deprecated_kwargs = PyList_New(n_names);
+    Py_INCREF(deprecated_kwargs);
 
     if (kwds != NULL) {
         int has_kw = -2;
+
+        Py_ssize_t n_depr = 0;
         for (i=0 ; i < n_names ; ++i) {
             name = PyTuple_GET_ITEM(self->names, i);
             has_kw = PyDict_Contains(kwds, name);
             if (has_kw) {
-                deprecated_kwargs[i] = name;
+                PyList_SET_ITEM(deprecated_kwargs, n_depr, name);
                 ++n_depr;
-            } else {
-                deprecated_kwargs[i] = NULL;
             }
         }
 
@@ -134,30 +134,23 @@ wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
             Py_ssize_t size = 0;
             // tmp init values to avoid segfaults
             pos = "<pos>";
+            PyObject *names_unicode;
             if (n_depr > 1) {
-                // the simplest way to achieve this is probably to use PyList_New
-                // instead of a PyObject* array for deprecated_kwargs
-                // note however that this means we'll need to call Py_DECREF on it
-                // when Py_WarnEx is called if an exception is raised
-                //names_str = str(deprecated_kw)
-                sprintf(names_str, "<names_str>"); // place holder
+                names_unicode = PyObject_Str(PyList_GetSlice(deprecated_kwargs, 0, n_depr));
                 s = "s";
                 arguments = " arguments";
                 respectively = ", respectively";
                 //pos = [pos for pos, _ in pos2kw]
                 pronoun = "them";
             } else {
-                for (i=0 ; i < n_names ; ++i) {
-                    if (deprecated_kwargs[i] != NULL) break;
-                }
-                PyObject *names_unicode = PyObject_Repr(deprecated_kwargs[i]);
-                char* names__ = PyUnicode_AsUTF8AndSize(names_unicode, size);
-                if(size > 256) { };
-                sprintf(names_str, "%s", names__);
+                names_unicode = PyObject_Repr(PyList_GET_ITEM(deprecated_kwargs, 0));
                 s = arguments = respectively = "";
                 // pos, _ = pos2kw[0];
                 pronoun = "it";
             }
+            char* names__ = PyUnicode_AsUTF8AndSize(names_unicode, size);
+            if(size > 256) { };
+            sprintf(names_str, "%s", names__);
 
             char *msg[1024];
             sprintf(
@@ -169,7 +162,10 @@ wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
             );
     
             // step 3: emit warning
-            PyErr_WarnEx(PyExc_FutureWarning, msg, 2);
+            int status = PyErr_WarnEx(PyExc_FutureWarning, msg, 2);
+            if (status == -1) {
+                Py_DECREF(deprecated_kwargs);
+            }
         }
     }
 

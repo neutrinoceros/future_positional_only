@@ -19,50 +19,58 @@ def test_no_warn(func):
 @pytest.mark.parametrize(
     "func, args, kwargs, match",
     [
-        (
+        pytest.param(
             depr1,
             (),
             {"a": 1, "b": 2, "c": 3, "d": 4},
             r"Passing 'a' as keyword \(at position 0\) is deprecated",
+            id="1 deprecation, 1 warn",
         ),
-        (
+        pytest.param(
             depr2,
             (1,),
             {"b": 2, "c": 3, "d": 4},
             r"Passing 'b' as keyword \(at position 1\) is deprecated",
+            id="2 deprecation, 1 warn",
         ),
-        (
+        pytest.param(
             depr2,
             (),
             {"a": 1, "b": 2, "c": 3, "d": 4},
             r"Passing \['a', 'b'\] arguments as keywords "
             r"\(at positions \[0, 1\] respectively\) is deprecated",
+            id="2 deprecations, 2 warns",
         ),
-        (
+        pytest.param(
             depr4,
             (),
             {"a": 1, "b": 2, "c": 3, "d": 4},
             r"Passing \['a', 'b', 'c', 'd'\] arguments as keywords "
             r"\(at positions \[0, 1, 2, 3\] respectively\) is deprecated",
+            id="4 deprecation, 4 warns",
         ),
-        (
+        pytest.param(
             depr4,
             (1,),
             {"b": 2, "c": 3, "d": 4},
             r"Passing \['b', 'c', 'd'\] arguments as keywords "
             r"\(at positions \[1, 2, 3\] respectively\) is deprecated",
+            id="4 deprecation, 3 warns",
         ),
-        (
+        pytest.param(
             depr4,
             (1, 2),
             {"c": 3, "d": 4},
-            r"Passing \['c', 'd'\] arguments as keywords \(at positions \[0, 1\] respectively\) is deprecated",
+            r"Passing \['c', 'd'\] arguments as keywords "
+            r"\(at positions \[0, 1\] respectively\) is deprecated",
+            id="4 deprecation, 2 warns",
         ),
-        (
+        pytest.param(
             depr4,
             (1, 2, 3),
             {"d": 4},
             r"Passing 'd' as keyword \(at position 3\) is deprecated",
+            id="4 deprecation, 1 warn",
         ),
     ],
 )

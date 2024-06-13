@@ -8,6 +8,7 @@ def wrap(
     names: tuple[str, ...],
     signature: Signature,
 ) -> Callable[..., Any]:
+    "wrap (Py impl)"
     def wrapper(*args, **kwargs):
         if deprecated_kwargs := set(kwargs).intersection(names):
             params = list(signature.parameters)

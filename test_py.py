@@ -6,9 +6,9 @@ def noop(a, b, c, d):
     return
 
 
-depr1 = fpo(kw=["a"])(noop)
-depr2 = fpo(kw=["a", "b"])(noop)
-depr4 = fpo(kw=["a", "b", "c", "d"])(noop)
+depr1 = fpo(names=("a",))(noop)
+depr2 = fpo(names=("a", "b"))(noop)
+depr4 = fpo(names=("a", "b", "c", "d"))(noop)
 
 
 @pytest.mark.parametrize("func", [depr1, depr2, depr4])

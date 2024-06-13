@@ -21,14 +21,21 @@ def fpo(func: F, /, *names: str) -> F:
     ...
 
 
-def fpo(func: Union[F, None] = None, /, *, kw: list[str]) -> Any:
+def fpo(func: Union[F, None] = None, /, *, names: tuple[str, ...] = ()) -> Any:
     if func is None:
-        return partial(fpo, kw=kw)
+        return partial(fpo, names=names)
 
     if not callable(func):
         raise TypeError('not a callable')
 
+    if not isinstance(names, tuple):
+        raise TypeError("names must be a tuple")
+    
+    for i, name in enumerate(names):
+        if not isinstance(name, str):
+            raise TypeError(f"names[{i}] must be a string")
+
     sig = Signature.from_callable(func)
-    wrapper = wrap(func, kw, sig)
+    wrapper = wrap(func, names, sig)
     update_wrapper(wrapper, func)
     return wrapper

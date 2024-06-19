@@ -7,15 +7,7 @@ from setuptools import setup, Extension
 py_modules = ['future_positional_only', '_future_positional_only']
 ext_modules = []
 
-use_extension = False
-
-if '--compile-extension' in sys.argv:
-    sys.argv.remove('--compile-extension')
-    use_extension = True
-elif os.getenv('COMPILE_FPO', None) is not None:
-    use_extension = True
-
-if use_extension:
+if 'FPO_PY_IMPL' not in os.environ:
     py_modules.remove('_future_positional_only')
     ext_modules.append(Extension('_future_positional_only',
                                  ['_future_positional_only.c']))

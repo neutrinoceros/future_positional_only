@@ -2,6 +2,7 @@
 // license: MIT
 
 #define PY_SSIZE_T_CLEAN
+#define Py_LIMITED_API 0x031000f0
 #include <Python.h>
 #include <structmember.h>
 

@@ -106,9 +106,14 @@ static PyObject*
 wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
     // step 1: detect deprecated keyword arguments
     PyObject *name = NULL;
-    PyObject *result = NULL;
     Py_ssize_t i = 0;
     Py_ssize_t n_names = 0;
+
+    if (self->wrapped == NULL)
+        Py_RETURN_NONE;
+
+    if (kwds == NULL)
+        return PyObject_Call(self->wrapped, args, kwds);
 
     n_names = PyTuple_GET_SIZE(self->names);
     PyObject *deprecated_kwargs = PyList_New(n_names);
@@ -184,8 +189,7 @@ wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
     fflush(stdout);
     */
 
-    result = PyObject_Call(self->wrapped, args, kwds);
-    return result;
+    return PyObject_Call(self->wrapped, args, kwds);
 }
 
 

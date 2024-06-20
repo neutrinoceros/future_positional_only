@@ -129,7 +129,8 @@ wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
 
         if (n_depr > 0) {
             // step 2: generate/format message
-            char *names_str[256], *s, *arguments, *respectively, *pronoun;
+            char *names_str = "";
+            char *s, *arguments, *respectively, *pronoun;
 
             Py_ssize_t size = 0;
             PyObject *names_unicode;
@@ -144,11 +145,11 @@ wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
                 s = arguments = respectively = "";
                 pronoun = "it";
             }
-            char* names__ = PyUnicode_AsUTF8AndSize(names_unicode, &size);
+            const char* names__ = PyUnicode_AsUTF8AndSize(names_unicode, &size);
             if(size > 256) { };
             sprintf(names_str, "%s", names__);
 
-            char *msg[1024];
+            char *msg = "";
             sprintf(
                 msg,
                 "Passing %s%s as keyword%s "

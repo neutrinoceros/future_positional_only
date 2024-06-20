@@ -104,13 +104,14 @@ static PyMemberDef wrap_members[] = {
 
 static PyObject*
 wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
-    // step 1: detect deprecated keyword arguments
+    // step 0: return early whenever possible
     if (self->wrapped == NULL)
         Py_RETURN_NONE;
 
     if (kwds == NULL)
         return PyObject_Call(self->wrapped, args, kwds);
 
+    // step 1: detect any deprecated keyword arguments, return if none.
     Py_ssize_t n_names = PyTuple_GET_SIZE(self->names);
     PyObject *deprecated_kwargs = PyList_New(n_names);
     Py_INCREF(deprecated_kwargs);
@@ -127,63 +128,44 @@ wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
             ++n_depr;
         }
     }
+    
+    if (n_depr == 0)
+        return PyObject_Call(self->wrapped, args, kwds);
 
-    if (n_depr > 0) {
-        // step 2: generate/format message
-        char *names_str = "";
-        char *s, *arguments, *respectively, *pronoun;
+    // step 2: create and emit warning message
+    char *names_str = "";
+    char *s, *arguments, *respectively, *pronoun;
 
-        Py_ssize_t size = 0;
-        PyObject *names_unicode;
-        if (n_depr > 1) {
-            names_unicode = PyObject_Str(PyList_GetSlice(deprecated_kwargs, 0, n_depr));
-            s = "s";
-            arguments = " arguments";
-            respectively = ", respectively";
-            pronoun = "them";
-        } else {
-            names_unicode = PyObject_Repr(PyList_GET_ITEM(deprecated_kwargs, 0));
-            s = arguments = respectively = "";
-            pronoun = "it";
-        }
-        const char* names__ = PyUnicode_AsUTF8AndSize(names_unicode, &size);
-        if(size > 256) { };
-        sprintf(names_str, "%s", names__);
-
-        char *msg = "";
-        sprintf(
-            msg,
-            "Passing %s%s as keyword%s "
-            "is deprecated and will stop working in a future release. "
-            "Pass %s positionally to suppress this warning.",
-            names_str, arguments, s, pronoun
-        );
-
-        // step 3: emit warning
-        int status = PyErr_WarnEx(PyExc_FutureWarning, msg, 2);
-        if (status == -1) {
-            Py_DECREF(deprecated_kwargs);
-        }
-    }
-
-
-    // debug
-    /*
-    Py_ssize_t s = 0;
-    if (args == NULL) {
-        printf("args is NULL\n");
+    Py_ssize_t size = 0;
+    PyObject *names_unicode;
+    if (n_depr > 1) {
+        names_unicode = PyObject_Str(PyList_GetSlice(deprecated_kwargs, 0, n_depr));
+        s = "s";
+        arguments = " arguments";
+        respectively = ", respectively";
+        pronoun = "them";
     } else {
-        s = PyTuple_GET_SIZE(args);
-        printf("len(args) = %i\n", s);
+        names_unicode = PyObject_Repr(PyList_GET_ITEM(deprecated_kwargs, 0));
+        s = arguments = respectively = "";
+        pronoun = "it";
     }
-    if (kwds == NULL) {
-        printf("kwds is NULL\n");
-    }  else {
-        s = PyDict_Size(kwds);
-        printf("len(kwds) = %i\n", s);
+    const char* names__ = PyUnicode_AsUTF8AndSize(names_unicode, &size);
+    sprintf(names_str, "%s", names__);
+
+    char *msg = "";
+    sprintf(
+        msg,
+        "Passing %s%s as keyword%s "
+        "is deprecated and will stop working in a future release. "
+        "Pass %s positionally to suppress this warning.",
+        names_str, arguments, s, pronoun
+    );
+
+    int status = PyErr_WarnEx(PyExc_FutureWarning, msg, 2);
+    if (status == -1) {
+        // avoid leaking memory if Warning is promoted to Exception
+        Py_DECREF(deprecated_kwargs);
     }
-    fflush(stdout);
-    */
 
     return PyObject_Call(self->wrapped, args, kwds);
 }

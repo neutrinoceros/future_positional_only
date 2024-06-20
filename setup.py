@@ -12,8 +12,7 @@ if "FPO_PY_IMPL" not in os.environ:
         Extension(
             "_future_positional_only",
             ["_future_positional_only.c"],
-            extra_compile_args=["-Werror"],
-        ),  # , "-Wall", "-Wextra"]),
+            extra_compile_args=["-Werror", "-Wall"]),
     )
 
 setup(py_modules=py_modules, ext_modules=ext_modules)

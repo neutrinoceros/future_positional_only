@@ -1,4 +1,4 @@
-from typing import Any, Callable, Tuple
+from typing import Any, Callable
 import warnings
 from inspect import Signature
 
@@ -11,7 +11,7 @@ def wrap(
     "wrap (Py impl)"
     if not isinstance(names, tuple):
         raise TypeError("names must be a tuple")
-    
+
     for i, name in enumerate(names):
         if not isinstance(name, str):
             raise TypeError(f"names[{i}] must be a string")

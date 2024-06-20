@@ -11,10 +11,12 @@ def test_names_not_a_tuple():
     with pytest.raises(TypeError, match=r"names must be a tuple"):
         dec(noop)
 
+
 def test_name_not_a_string():
     dec = fpo(names=(b"a",))
     with pytest.raises(TypeError, match=r"names\[0\] must be a string"):
         dec(noop)
+
 
 depr1 = fpo(names=("a",))(noop)
 depr2 = fpo(names=("a", "b"))(noop)

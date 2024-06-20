@@ -105,71 +105,67 @@ static PyMemberDef wrap_members[] = {
 static PyObject*
 wrap_call(WrapObject* self, PyObject* args, PyObject* kwds) {
     // step 1: detect deprecated keyword arguments
-    PyObject *name = NULL;
-    Py_ssize_t i = 0;
-    Py_ssize_t n_names = 0;
-
     if (self->wrapped == NULL)
         Py_RETURN_NONE;
 
     if (kwds == NULL)
         return PyObject_Call(self->wrapped, args, kwds);
 
-    n_names = PyTuple_GET_SIZE(self->names);
+    Py_ssize_t n_names = PyTuple_GET_SIZE(self->names);
     PyObject *deprecated_kwargs = PyList_New(n_names);
     Py_INCREF(deprecated_kwargs);
+    PyObject *name = NULL;
+    Py_ssize_t i = 0;
+    int has_kw = -2;
 
-    if (kwds != NULL) {
-        int has_kw = -2;
-
-        Py_ssize_t n_depr = 0;
-        for (i=0 ; i < n_names ; ++i) {
-            name = PyTuple_GET_ITEM(self->names, i);
-            has_kw = PyDict_Contains(kwds, name);
-            if (has_kw) {
-                PyList_SET_ITEM(deprecated_kwargs, n_depr, name);
-                ++n_depr;
-            }
-        }
-
-        if (n_depr > 0) {
-            // step 2: generate/format message
-            char *names_str = "";
-            char *s, *arguments, *respectively, *pronoun;
-
-            Py_ssize_t size = 0;
-            PyObject *names_unicode;
-            if (n_depr > 1) {
-                names_unicode = PyObject_Str(PyList_GetSlice(deprecated_kwargs, 0, n_depr));
-                s = "s";
-                arguments = " arguments";
-                respectively = ", respectively";
-                pronoun = "them";
-            } else {
-                names_unicode = PyObject_Repr(PyList_GET_ITEM(deprecated_kwargs, 0));
-                s = arguments = respectively = "";
-                pronoun = "it";
-            }
-            const char* names__ = PyUnicode_AsUTF8AndSize(names_unicode, &size);
-            if(size > 256) { };
-            sprintf(names_str, "%s", names__);
-
-            char *msg = "";
-            sprintf(
-                msg,
-                "Passing %s%s as keyword%s "
-                "is deprecated and will stop working in a future release. "
-                "Pass %s positionally to suppress this warning.",
-                names_str, arguments, s, pronoun
-            );
-    
-            // step 3: emit warning
-            int status = PyErr_WarnEx(PyExc_FutureWarning, msg, 2);
-            if (status == -1) {
-                Py_DECREF(deprecated_kwargs);
-            }
+    Py_ssize_t n_depr = 0;
+    for (i=0 ; i < n_names ; ++i) {
+        name = PyTuple_GET_ITEM(self->names, i);
+        has_kw = PyDict_Contains(kwds, name);
+        if (has_kw) {
+            PyList_SET_ITEM(deprecated_kwargs, n_depr, name);
+            ++n_depr;
         }
     }
+
+    if (n_depr > 0) {
+        // step 2: generate/format message
+        char *names_str = "";
+        char *s, *arguments, *respectively, *pronoun;
+
+        Py_ssize_t size = 0;
+        PyObject *names_unicode;
+        if (n_depr > 1) {
+            names_unicode = PyObject_Str(PyList_GetSlice(deprecated_kwargs, 0, n_depr));
+            s = "s";
+            arguments = " arguments";
+            respectively = ", respectively";
+            pronoun = "them";
+        } else {
+            names_unicode = PyObject_Repr(PyList_GET_ITEM(deprecated_kwargs, 0));
+            s = arguments = respectively = "";
+            pronoun = "it";
+        }
+        const char* names__ = PyUnicode_AsUTF8AndSize(names_unicode, &size);
+        if(size > 256) { };
+        sprintf(names_str, "%s", names__);
+
+        char *msg = "";
+        sprintf(
+            msg,
+            "Passing %s%s as keyword%s "
+            "is deprecated and will stop working in a future release. "
+            "Pass %s positionally to suppress this warning.",
+            names_str, arguments, s, pronoun
+        );
+
+        // step 3: emit warning
+        int status = PyErr_WarnEx(PyExc_FutureWarning, msg, 2);
+        if (status == -1) {
+            Py_DECREF(deprecated_kwargs);
+        }
+    }
+
 
     // debug
     /*

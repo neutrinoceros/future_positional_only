@@ -1,6 +1,6 @@
 # type: ignore
 
-from functools import wraps
+from functools import wraps, partial
 from timeit import repeat
 
 from future_positional_only import fpo
@@ -18,11 +18,12 @@ def decorated(func):
     return wrapper
 
 
-def test_performance(*funcs, **repeat_kwargs):
+def test_performance(*funcs, nkwargs, **repeat_kwargs):
     """Test the performance of the passed functions."""
     results = []
+    stmt = ''.join(["func(", ', '.join([f"a{i}=None" for i in range(1, nkwargs+1)]), ")"])
     for func in funcs:
-        times = repeat(func, **repeat_kwargs)
+        times = repeat(stmt, **repeat_kwargs, globals=locals())
         results.append((func.__name__, times))
     return results
 
@@ -32,12 +33,12 @@ def func0():
     pass
 
 
-def func1(a1=None, /):
+def func1(a1=None):
     """Function with one argument, doing nothing."""
     pass
 
 
-def func5(a1=None, a2=None, a3=None, a4=None, a5=None, /):
+def func5(a1=None, a2=None, a3=None, a4=None, a5=None):
     """Function with five arguments, doing nothing."""
     pass
 
@@ -70,15 +71,31 @@ func5_fpo = fpo(func5)
 func5_fpo.__name__ = "func5_fpo"
 
 
-results = {
-    "func0": test_performance(func0, func0_decorated, func0_def, func0_fpo),
-    "func1": test_performance(func1, func1_decorated, func1_def, func1_fpo),
-    "func5": test_performance(func5, func5_decorated, func5_def, func5_fpo),
-}
-print("{")
-for _, is_last, (label, res) in mark_ends(results.items()):
-    print(f'"{label}": {{')
-    for _, is_end, (name, times) in mark_ends(res):
-        print(f'  "{name}": {sum(times)/len(times)}', end="\n" if is_end else ",\n")
-    print("  }", end="\n" if is_last else ",\n")
-print("}")
+def main(argv = None) -> int:
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser()
+    parser.add_argument("--nkwargs", type=int, default=0)
+    args = parser.parse_args()
+
+    bench = partial(test_performance, nkwargs=args.nkwargs)
+
+    results = {}
+
+    if args.nkwargs < 1:
+        results["func0"] = bench(func0, func0_decorated, func0_def, func0_fpo)
+    if args.nkwargs < 2:
+        results["func1"] = bench(func1, func1_decorated, func1_def, func1_fpo)
+    results["func5"] = bench(func5, func5_decorated, func5_def, func5_fpo)
+
+    print("{")
+    for _, is_last, (label, res) in mark_ends(results.items()):
+        print(f'"{label}": {{')
+        for _, is_end, (name, times) in mark_ends(res):
+            print(f'  "{name}": {sum(times)/len(times)}', end="\n" if is_end else ",\n")
+        print("  }", end="\n" if is_last else ",\n")
+    print("}")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
